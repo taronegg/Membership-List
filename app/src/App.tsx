@@ -1,122 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import { LoginScreen } from './auth/LoginScreen';
 
-function App() {
-  const [count, setCount] = useState(0)
+function AuthedShell() {
+  const { leader, error, signOut } = useAuth();
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+  if (error) {
+    return (
+      <div style={{ padding: 'var(--space-screen)', maxWidth: 480, margin: '0 auto' }}>
+        <p style={{ color: 'var(--accent-darkest)' }}>{error}</p>
+        <button onClick={() => void signOut()} style={{ marginTop: 12 }}>
+          Abmelden
         </button>
-      </section>
+      </div>
+    );
+  }
 
-      <div className="ticks"></div>
+  if (!leader) return null;
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  // Platzhalter -- die eigentliche Tab-Navigation (Abschnitt 6) und die
+  // Screens (Abschnitt 7) folgen in den nächsten Schritten von Abschnitt 13.
+  return (
+    <div style={{ padding: 'var(--space-screen)' }}>
+      <p style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+        Angemeldet als
+      </p>
+      <h1 style={{ fontSize: 20, fontWeight: 800, margin: '4px 0 20px' }}>
+        {leader.name} ({leader.rolle === 'pfarrer' ? 'Pfarrer' : 'Leiter'})
+      </h1>
+      <button onClick={() => void signOut()}>Abmelden</button>
+    </div>
+  );
 }
 
-export default App
+function Gate() {
+  const { session, loading } = useAuth();
+
+  if (loading) return null;
+  if (!session) return <LoginScreen />;
+  return <AuthedShell />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Gate />
+    </AuthProvider>
+  );
+}
+
+export default App;
