@@ -14,6 +14,8 @@ interface Fixtures {
 type Filter = { col: string; op: 'eq' | 'in'; val: unknown };
 
 export function createFakeSupabase(fixtures: Fixtures) {
+  let idCounter = 0;
+
   function currentRows(table: string): Row[] {
     return (fixtures[table] as Row[] | undefined) ?? [];
   }
@@ -52,6 +54,25 @@ export function createFakeSupabase(fixtures: Fixtures) {
         mode = 'update';
         updatePatch = patch;
         return builder;
+      },
+      insert(input: Row | Row[]) {
+        const arr = Array.isArray(input) ? input : [input];
+        const rows = currentRows(table);
+        const inserted = arr.map((row) => ({ id: (row.id as string) ?? `${table}-${++idCounter}`, ...row }));
+        rows.push(...inserted);
+        fixtures[table] = rows;
+        return {
+          select(_cols: string) {
+            return {
+              single() {
+                return Promise.resolve({ data: inserted[0] ?? null, error: null });
+              },
+            };
+          },
+          then(resolve: (v: { error: null }) => unknown, reject?: (e: unknown) => unknown) {
+            return Promise.resolve({ error: null }).then(resolve, reject);
+          },
+        };
       },
       upsert(input: Row | Row[], opts?: { onConflict?: string }) {
         const arr = Array.isArray(input) ? input : [input];

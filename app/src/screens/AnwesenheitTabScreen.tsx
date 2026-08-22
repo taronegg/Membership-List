@@ -1,13 +1,22 @@
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useCheckin } from '../hooks/useCheckin';
+import { useEventSessions } from '../hooks/useEventSessions';
 import { CheckinToggle } from '../components/CheckinToggle';
-import { letzterSonntag } from '../lib/format';
-import { PlatzhalterTabScreen } from './PlatzhalterTabScreen';
+import { AnwesenheitChip } from '../components/AnwesenheitChip';
+import { NeutralChip } from '../components/StatusChip';
+import { letzterSonntag, formatDatumKurz } from '../lib/format';
+import { useNavigation } from '../nav/NavigationContext';
 
 // Abschnitt 7.5: Anwesenheit (Tab), Sub-Tab "Sonntag". Der Offline-Puffer
 // selbst steckt in useCheckin()/useOutboxSync() (Abschnitt 3, 13 Schritt 6).
 
 type SubTab = 'sonntag' | 'events';
+
+const SUB_TABS: { key: SubTab; label: string }[] = [
+  { key: 'sonntag', label: 'Sonntag' },
+  { key: 'events', label: 'Events' },
+];
 
 export function AnwesenheitTabScreen() {
   const [subTab, setSubTab] = useState<SubTab>('sonntag');
@@ -17,37 +26,89 @@ export function AnwesenheitTabScreen() {
       <div style={{ padding: '16px 16px 0' }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 14px' }}>Anwesenheit</h1>
         <div style={{ display: 'flex', border: '1px solid var(--divider)', marginBottom: 16 }}>
-          {(['sonntag', 'events'] as const).map((t) => (
+          {SUB_TABS.map(({ key, label }) => (
             <button
-              key={t}
-              onClick={() => setSubTab(t)}
+              key={key}
+              onClick={() => setSubTab(key)}
               style={{
                 flex: 1,
                 minHeight: 40,
                 border: 'none',
-                background: subTab === t ? 'var(--text)' : 'transparent',
-                color: subTab === t ? 'var(--bg)' : 'var(--text)',
+                background: subTab === key ? 'var(--text)' : 'transparent',
+                color: subTab === key ? 'var(--bg)' : 'var(--text)',
                 fontSize: 13,
                 fontWeight: 700,
-                textTransform: 'capitalize',
               }}
             >
-              {t}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {subTab === 'sonntag' ? (
-          <SonntagCheckin />
-        ) : (
-          <PlatzhalterTabScreen
-            titel=""
-            hinweis="Events folgen in Abschnitt 13, Schritt 9."
-          />
-        )}
+        {subTab === 'sonntag' ? <SonntagCheckin /> : <EventsTab />}
       </div>
+    </div>
+  );
+}
+
+function EventsTab() {
+  const { sessions, loading } = useEventSessions();
+  const { push } = useNavigation();
+  const [aufgeklappt, setAufgeklappt] = useState<string | null>(null);
+
+  return (
+    <div style={{ padding: '0 16px 32px' }}>
+      <button
+        onClick={() => push({ type: 'eventForm' })}
+        style={{ width: '100%', minHeight: 44, background: 'var(--accent)', color: 'var(--bg)', border: 'none', fontWeight: 800, fontSize: 14, textAlign: 'left', padding: '0 16px', marginBottom: 16 }}
+      >
+        Event anlegen
+      </button>
+
+      {loading && <p style={{ color: 'var(--text-tertiary)' }}>Lädt…</p>}
+      {!loading && sessions.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Noch keine Events erfasst.</p>}
+
+      {sessions.map((s) => {
+        const anwesendCount = s.teilnehmer.filter((t) => t.anwesend).length;
+        const offen = aufgeklappt === s.id;
+        return (
+          <div key={s.id} style={{ borderBottom: '1px solid var(--divider)' }}>
+            <button
+              onClick={() => setAufgeklappt(offen ? null : s.id)}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '10px 0', background: 'none', border: 'none', textAlign: 'left' }}
+            >
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{s.name}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '2px 0 0' }}>
+                  {formatDatumKurz(s.datum)} · {s.verantwortlich?.name ?? '—'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <NeutralChip label={`${anwesendCount}/${s.teilnehmer.length}`} />
+                <ChevronDown size={16} style={{ transform: offen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+              </div>
+            </button>
+            {offen && (
+              <div style={{ paddingBottom: 10 }}>
+                {s.teilnehmer.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0 8px' }}>Keine Teilnehmer.</p>}
+                {s.teilnehmer.map((t) => (
+                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '6px 0 6px 12px', gap: 8 }}>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{t.personName}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '2px 0 0' }}>
+                        {[t.rolle, s.verantwortlich?.name, t.notiz].filter(Boolean).join(' · ') || '—'}
+                      </p>
+                    </div>
+                    <AnwesenheitChip status={t.anwesend ? 'anwesend' : 'abwesend'} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

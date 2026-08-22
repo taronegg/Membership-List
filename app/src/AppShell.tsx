@@ -8,6 +8,7 @@ import { ProfilTabScreen } from './screens/ProfilTabScreen';
 import { AnwesenheitTabScreen } from './screens/AnwesenheitTabScreen';
 import { KontakteTabScreen } from './screens/KontakteTabScreen';
 import { KontaktFormScreen } from './screens/KontaktFormScreen';
+import { EventFormScreen } from './screens/EventFormScreen';
 import { UebersichtScreen } from './screens/UebersichtScreen';
 
 // Abschnitt 6 (Navigation): Tab-Inhalt oder, wenn der Screen-Stack nicht leer
@@ -37,6 +38,8 @@ function StackScreen({ screen }: { screen: NonNullable<ReturnType<typeof useNavi
       return <PersonFormScreen mode={screen.mode} />;
     case 'kontaktForm':
       return <KontaktFormScreen personId={screen.personId} />;
+    case 'eventForm':
+      return <EventFormScreen />;
   }
 }
 

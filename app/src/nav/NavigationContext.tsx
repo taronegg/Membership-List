@@ -12,7 +12,8 @@ export type Screen =
   | { type: 'personDetail'; personId: string; subTab: PersonSubTab }
   | { type: 'personForm'; mode: 'neu' }
   | { type: 'personForm'; mode: 'bearbeiten'; personId: string }
-  | { type: 'kontaktForm'; personId: string };
+  | { type: 'kontaktForm'; personId: string }
+  | { type: 'eventForm' };
 
 interface NavState {
   tab: Tab;

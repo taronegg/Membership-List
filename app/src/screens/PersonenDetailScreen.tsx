@@ -2,12 +2,14 @@ import { Pencil, ArrowRight } from 'lucide-react';
 import { usePerson } from '../hooks/usePerson';
 import { usePersonAttendance } from '../hooks/usePersonAttendance';
 import { usePersonContacts } from '../hooks/usePersonContacts';
+import { usePersonEvents } from '../hooks/usePersonEvents';
 import { useNavigation, type PersonSubTab } from '../nav/NavigationContext';
 import { Header } from '../components/Header';
 import { InitialsBox } from '../components/InitialsBox';
 import { StatusChip, NeutralChip } from '../components/StatusChip';
 import { FieldGroup, FieldRow } from '../components/FieldGroup';
 import { SonntagsStreifen } from '../components/SonntagsStreifen';
+import { AnwesenheitChip } from '../components/AnwesenheitChip';
 import { formatDatumLang, formatDatumKurz, alterInJahren } from '../lib/format';
 import { formatPhoneCH } from '@shared/telefon';
 
@@ -108,23 +110,9 @@ export function PersonenDetailScreen({ personId, subTab }: { personId: string; s
   );
 }
 
-function PlatzhalterHinweis({ text }: { text: string }) {
-  return <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{text}</p>;
-}
-
-/** 7.3: Status-Chip mit dem Anwesenheits-Zustand als Text ("anwesend" / "abwesend" / "nicht erfasst"). */
-function AnwesenheitChip({ status }: { status: 'anwesend' | 'abwesend' | null }) {
-  const bg = status === 'anwesend' ? 'var(--text)' : status === 'abwesend' ? 'var(--accent)' : 'var(--chip-neutral-bg)';
-  const fg = status ? 'var(--bg)' : 'var(--chip-neutral-text)';
-  return (
-    <span className="chip" style={{ display: 'inline-block', background: bg, color: fg, fontSize: 10, fontWeight: 700, padding: '3px 8px' }}>
-      {status ?? 'nicht erfasst'}
-    </span>
-  );
-}
-
 function AnwesenheitSubTab({ personId }: { personId: string }) {
   const { eintraege, stats, loading } = usePersonAttendance(personId);
+  const { events, loading: eventsLoading } = usePersonEvents(personId);
 
   if (loading) return <p style={{ color: 'var(--text-tertiary)' }}>Lädt…</p>;
   if (!stats) return null;
@@ -168,7 +156,23 @@ function AnwesenheitSubTab({ personId }: { personId: string }) {
       </FieldGroup>
 
       <FieldGroup title="Events">
-        <PlatzhalterHinweis text="Events folgen in Abschnitt 13, Schritt 9." />
+        {eventsLoading && <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Lädt…</p>}
+        {!eventsLoading && events.length === 0 && (
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Keine Events erfasst.</p>
+        )}
+        {events.map((e) => (
+          <div key={e.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{e.eventName}</span>
+              <AnwesenheitChip status={e.anwesend ? 'anwesend' : 'abwesend'} />
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
+              {formatDatumKurz(e.datum)} · {e.verantwortlich?.name ?? '—'}
+              {e.rolle ? ` · ${e.rolle}` : ''}
+              {e.notiz ? ` · ${e.notiz}` : ''}
+            </p>
+          </div>
+        ))}
       </FieldGroup>
     </>
   );
