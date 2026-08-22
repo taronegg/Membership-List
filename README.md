@@ -16,15 +16,37 @@ Dieses README ist nur eine Landkarte durch das Repo.
 
 ## Stand (Abschnitt 13, "Erste Schritte")
 
+Alle neun Schritte sind umgesetzt:
+
 1. ✅ Datenbankschema + RLS
 2. ✅ Excel-Import-Skript (ungetestet gegen die echten Dateien -- siehe `import/README.md`)
 3. ✅ Auth + zwei Rollen
 4. ✅ Personenliste + Personen-Detail (Sub-Tab Profil)
 5. ✅ Berechnungslogik als getestete Funktionen (`shared/berechnungen.test.ts`)
-6. ⏳ Check-in inkl. Offline-Puffer
-7. ⏳ Kontakte + Wiedervorlage
-8. ⏳ Übersicht (Home)
-9. ⏳ Events
+6. ✅ Check-in inkl. Offline-Puffer (IndexedDB-Outbox, siehe `app/src/lib/offlineOutbox.ts`)
+7. ✅ Kontakte + Wiedervorlage (inkl. "erledigt"-Zustand, Lücke 12.1)
+8. ✅ Übersicht (Home)
+9. ✅ Events (inkl. Anlegen, Lücke 12.2)
+
+## Was bewusst noch fehlt
+
+- **7.4 Person anlegen/bearbeiten** ist nur ein Platzhalter-Screen
+  (`app/src/screens/PersonFormScreen.tsx`). Das war in keinem der neun
+  Schritte aus Abschnitt 13 explizit gefordert, ist aber nötig, bevor die App
+  produktiv nutzbar ist.
+- **Audit-Log, Lesezugriffe** (Abschnitt 11): Schreibzugriffe auf `contacts`
+  werden per DB-Trigger protokolliert, Lesezugriffe auf die Notizen bräuchten
+  eine serverseitige Stelle (z.B. eine Edge Function) -- siehe
+  `supabase/README.md`.
+- **Import gegen die echten Excel-Dateien**: Das Skript ist gegen ein
+  synthetisches Workbook getestet, weil die beiden Original-Dateien diesem
+  Auftrag nicht beilagen -- siehe `import/README.md`.
+- **Abschnitt 12, Lücken 4-6** (Personen zusammenführen, Statushistorie,
+  Mandantenfähigkeit über eine Gemeinde hinaus) sind unverändert offen; 6 ist
+  auf Schema-Ebene vorbereitet (`gemeinde_id`), aber nicht in der UI nutzbar.
+- **Offline** deckt bisher nur den Check-in-Schreibpfad ab (die harte
+  Anforderung aus Abschnitt 3). Lesen ohne Verbindung (Personenliste etc.
+  aus dem Cache) ist nicht umgesetzt.
 
 ## Tests
 
