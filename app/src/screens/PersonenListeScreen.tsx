@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Search, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import { usePeopleList } from '../hooks/usePeopleList';
 import { useLookups } from '../hooks/useLookups';
 import { useAuth } from '../auth/AuthContext';
@@ -134,7 +134,25 @@ export function PersonenListeScreen() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <div style={{ padding: '16px 16px 0' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 14px' }}>Personen</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>Personen</h1>
+          <button
+            onClick={() => push({ type: 'personForm', mode: 'neu' })}
+            aria-label="Neue Person"
+            style={{
+              width: 34,
+              height: 34,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--accent)',
+              color: 'var(--bg)',
+              border: 'none',
+            }}
+          >
+            <Plus size={19} strokeWidth={2.5} />
+          </button>
+        </div>
 
         <div
           style={{

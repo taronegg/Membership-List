@@ -35,7 +35,11 @@ function StackScreen({ screen }: { screen: NonNullable<ReturnType<typeof useNavi
     case 'personDetail':
       return <PersonenDetailScreen personId={screen.personId} subTab={screen.subTab} />;
     case 'personForm':
-      return <PersonFormScreen mode={screen.mode} />;
+      return screen.mode === 'neu' ? (
+        <PersonFormScreen mode="neu" />
+      ) : (
+        <PersonFormScreen mode="bearbeiten" personId={screen.personId} />
+      );
     case 'kontaktForm':
       return <KontaktFormScreen personId={screen.personId} />;
     case 'eventForm':
