@@ -26,7 +26,8 @@ export function createFakeSupabase(fixtures: Fixtures) {
 
   function builderFor(table: string) {
     const filters: Filter[] = [];
-    let mode: 'select' | 'delete' = 'select';
+    let mode: 'select' | 'delete' | 'update' = 'select';
+    let updatePatch: Row = {};
 
     const builder = {
       select(_cols: string) {
@@ -45,6 +46,11 @@ export function createFakeSupabase(fixtures: Fixtures) {
       },
       delete() {
         mode = 'delete';
+        return builder;
+      },
+      update(patch: Row) {
+        mode = 'update';
+        updatePatch = patch;
         return builder;
       },
       upsert(input: Row | Row[], opts?: { onConflict?: string }) {
@@ -67,6 +73,13 @@ export function createFakeSupabase(fixtures: Fixtures) {
         if (mode === 'delete') {
           const bleibt = currentRows(table).filter((r) => applyFilters([r], filters).length === 0);
           fixtures[table] = bleibt;
+          return Promise.resolve({ data: null, error: null }).then(resolve, reject);
+        }
+        if (mode === 'update') {
+          const rows = currentRows(table);
+          for (const r of rows) {
+            if (applyFilters([r], filters).length > 0) Object.assign(r, updatePatch);
+          }
           return Promise.resolve({ data: null, error: null }).then(resolve, reject);
         }
         const filtered = applyFilters(currentRows(table), filters);

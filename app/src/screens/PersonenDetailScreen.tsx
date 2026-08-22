@@ -1,6 +1,7 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, ArrowRight } from 'lucide-react';
 import { usePerson } from '../hooks/usePerson';
 import { usePersonAttendance } from '../hooks/usePersonAttendance';
+import { usePersonContacts } from '../hooks/usePersonContacts';
 import { useNavigation, type PersonSubTab } from '../nav/NavigationContext';
 import { Header } from '../components/Header';
 import { InitialsBox } from '../components/InitialsBox';
@@ -100,9 +101,7 @@ export function PersonenDetailScreen({ personId, subTab }: { personId: string; s
         <div style={{ padding: '18px 16px 32px' }}>
           {subTab === 'profil' && <ProfilSubTab person={person} kontaktStats={kontaktStats} />}
           {subTab === 'anwesenheit' && <AnwesenheitSubTab personId={personId} />}
-          {subTab === 'kontakte' && (
-            <PlatzhalterHinweis text="Kontakte folgen in Abschnitt 13, Schritt 7 (Kontakte + Wiedervorlage)." />
-          )}
+          {subTab === 'kontakte' && <KontakteSubTab personId={personId} />}
         </div>
       </div>
     </div>
@@ -233,5 +232,58 @@ function ProfilSubTab({
         </FieldGroup>
       )}
     </>
+  );
+}
+
+function KontakteSubTab({ personId }: { personId: string }) {
+  const { contacts, stats, loading } = usePersonContacts(personId);
+  const { push } = useNavigation();
+
+  return (
+    <>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'var(--divider)', marginBottom: 16 }}>
+        <Kennzahl label="Kontakte" wert={String(stats?.kontakteTotal ?? 0)} />
+        <Kennzahl label="Tage seit" wert={stats?.tageSeitKontakt !== null && stats?.tageSeitKontakt !== undefined ? String(stats.tageSeitKontakt) : '—'} />
+        <Kennzahl label="Letzter" wert={formatDatumKurz(stats?.letzterKontakt ?? null)} />
+      </div>
+
+      <button
+        onClick={() => push({ type: 'kontaktForm', personId })}
+        style={{ width: '100%', minHeight: 44, background: 'var(--accent)', color: 'var(--bg)', border: 'none', fontWeight: 800, fontSize: 14, textAlign: 'left', padding: '0 16px', marginBottom: 18 }}
+      >
+        Kontakt erfassen
+      </button>
+
+      {loading && <p style={{ color: 'var(--text-tertiary)' }}>Lädt…</p>}
+      {!loading && contacts.length === 0 && <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Noch keine Kontakte erfasst.</p>}
+
+      {contacts.map((c) => (
+        <div key={c.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--divider)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 800 }}>{c.datum ? formatDatumKurz(c.datum) : 'Datum fehlt'}</span>
+            {c.art && <NeutralChip label={c.art.name} />}
+          </div>
+          {c.notiz && <p style={{ fontSize: 13, lineHeight: 1.5, margin: '6px 0 0' }}>{c.notiz}</p>}
+          {c.naechsterSchritt && (
+            <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--accent-darkest)', margin: '6px 0 0' }}>
+              <ArrowRight size={13} color="var(--accent)" /> {c.naechsterSchritt}
+            </p>
+          )}
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '6px 0 0' }}>
+            {c.verantwortlich?.name ?? '—'}
+            {c.wiedervorlage ? ` · Wiedervorlage ${formatDatumKurz(c.wiedervorlage)}` : ''}
+          </p>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function Kennzahl({ label, wert }: { label: string; wert: string }) {
+  return (
+    <div style={{ background: 'var(--surface)', padding: '10px 12px' }}>
+      <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--accent)', margin: '0 0 4px' }}>{label}</p>
+      <p style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>{wert}</p>
+    </div>
   );
 }

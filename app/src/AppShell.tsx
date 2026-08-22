@@ -6,6 +6,8 @@ import { PersonenDetailScreen } from './screens/PersonenDetailScreen';
 import { PersonFormScreen } from './screens/PersonFormScreen';
 import { ProfilTabScreen } from './screens/ProfilTabScreen';
 import { AnwesenheitTabScreen } from './screens/AnwesenheitTabScreen';
+import { KontakteTabScreen } from './screens/KontakteTabScreen';
+import { KontaktFormScreen } from './screens/KontaktFormScreen';
 import { PlatzhalterTabScreen } from './screens/PlatzhalterTabScreen';
 
 // Abschnitt 6 (Navigation): Tab-Inhalt oder, wenn der Screen-Stack nicht leer
@@ -34,12 +36,7 @@ function StackScreen({ screen }: { screen: NonNullable<ReturnType<typeof useNavi
     case 'personForm':
       return <PersonFormScreen mode={screen.mode} />;
     case 'kontaktForm':
-      return (
-        <PlatzhalterTabScreen
-          titel="Kontakt erfassen"
-          hinweis="Folgt in Abschnitt 13, Schritt 7 (Kontakte + Wiedervorlage)."
-        />
-      );
+      return <KontaktFormScreen personId={screen.personId} />;
   }
 }
 
@@ -52,7 +49,7 @@ function TabScreen({ tab }: { tab: ReturnType<typeof useNavigation>['tab'] }) {
     case 'anwesenheit':
       return <AnwesenheitTabScreen />;
     case 'kontakte':
-      return <PlatzhalterTabScreen titel="Kontakte" hinweis="Folgt in Abschnitt 13, Schritt 7 (Kontakte + Wiedervorlage)." />;
+      return <KontakteTabScreen />;
     case 'profil':
       return <ProfilTabScreen />;
   }
