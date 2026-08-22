@@ -1,9 +1,11 @@
 import { useNavigation } from './nav/NavigationContext';
 import { TabBar } from './components/TabBar';
+import { OfflineBanner } from './components/OfflineBanner';
 import { PersonenListeScreen } from './screens/PersonenListeScreen';
 import { PersonenDetailScreen } from './screens/PersonenDetailScreen';
 import { PersonFormScreen } from './screens/PersonFormScreen';
 import { ProfilTabScreen } from './screens/ProfilTabScreen';
+import { AnwesenheitTabScreen } from './screens/AnwesenheitTabScreen';
 import { PlatzhalterTabScreen } from './screens/PlatzhalterTabScreen';
 
 // Abschnitt 6 (Navigation): Tab-Inhalt oder, wenn der Screen-Stack nicht leer
@@ -16,6 +18,7 @@ export function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg)' }}>
+      <OfflineBanner />
       <div style={{ flex: 1, overflow: 'hidden' }}>
         {top ? <StackScreen screen={top} /> : <TabScreen tab={tab} />}
       </div>
@@ -47,7 +50,7 @@ function TabScreen({ tab }: { tab: ReturnType<typeof useNavigation>['tab'] }) {
     case 'personen':
       return <PersonenListeScreen />;
     case 'anwesenheit':
-      return <PlatzhalterTabScreen titel="Anwesenheit" hinweis="Folgt in Abschnitt 13, Schritt 6 (Check-in inkl. Offline-Puffer)." />;
+      return <AnwesenheitTabScreen />;
     case 'kontakte':
       return <PlatzhalterTabScreen titel="Kontakte" hinweis="Folgt in Abschnitt 13, Schritt 7 (Kontakte + Wiedervorlage)." />;
     case 'profil':

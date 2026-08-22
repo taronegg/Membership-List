@@ -1,9 +1,8 @@
-// Minimaler Fake für den Supabase-Client, nur für Komponenten-Tests.
-// Liefert vorbereitete, bereits "verbundene" Fixture-Daten pro Tabelle
-// zurück (so, wie PostgREST sie mit den Embeds aus den echten Hooks liefern
-// würde) -- die Tests prüfen damit das Rendering/die Interaktionslogik der
-// Screens, nicht die genaue Select-Query-Syntax (die ist gegen die reale
-// Postgres-Struktur separat geprüft, siehe supabase/README.md).
+// Minimaler Fake für den Supabase-Client, nur für Komponenten-/Hook-Tests.
+// Unterstützt select/eq/in/order/single (lesen), sowie upsert/delete
+// (schreiben) auf einem simplen In-Memory-"Tabellen"-Objekt -- genug, um die
+// Query-Muster aus den echten Hooks (inkl. useCheckin/attendanceSync für den
+// Offline-Puffer) ohne echtes Supabase-Projekt zu prüfen.
 
 type Row = Record<string, unknown>;
 
@@ -12,26 +11,66 @@ interface Fixtures {
   [table: string]: Row[] | Row | null | undefined;
 }
 
+type Filter = { col: string; op: 'eq' | 'in'; val: unknown };
+
 export function createFakeSupabase(fixtures: Fixtures) {
+  function currentRows(table: string): Row[] {
+    return (fixtures[table] as Row[] | undefined) ?? [];
+  }
+
+  function applyFilters(rows: Row[], filters: Filter[]): Row[] {
+    return rows.filter((r) =>
+      filters.every((f) => (f.op === 'eq' ? r[f.col] === f.val : (f.val as unknown[]).includes(r[f.col]))),
+    );
+  }
+
   function builderFor(table: string) {
-    let rows = ((fixtures[table] as Row[] | undefined) ?? []).slice();
+    const filters: Filter[] = [];
+    let mode: 'select' | 'delete' = 'select';
 
     const builder = {
       select(_cols: string) {
         return builder;
       },
       eq(col: string, val: unknown) {
-        rows = rows.filter((r) => r[col] === val);
+        filters.push({ col, op: 'eq', val });
+        return builder;
+      },
+      in(col: string, vals: unknown[]) {
+        filters.push({ col, op: 'in', val: vals });
         return builder;
       },
       order(_col: string) {
         return builder;
       },
-      single() {
-        return Promise.resolve({ data: rows[0] ?? null, error: null });
+      delete() {
+        mode = 'delete';
+        return builder;
       },
-      then(resolve: (v: { data: Row[]; error: null }) => unknown, reject?: (e: unknown) => unknown) {
-        return Promise.resolve({ data: rows, error: null }).then(resolve, reject);
+      upsert(input: Row | Row[], opts?: { onConflict?: string }) {
+        const arr = Array.isArray(input) ? input : [input];
+        const keys = (opts?.onConflict ?? 'id').split(',');
+        const rows = currentRows(table);
+        for (const row of arr) {
+          const idx = rows.findIndex((r) => keys.every((k) => r[k] === row[k]));
+          if (idx >= 0) rows[idx] = { ...rows[idx], ...row };
+          else rows.push({ ...row });
+        }
+        fixtures[table] = rows;
+        return Promise.resolve({ error: null });
+      },
+      single() {
+        const filtered = applyFilters(currentRows(table), filters);
+        return Promise.resolve({ data: filtered[0] ?? null, error: null });
+      },
+      then(resolve: (v: { data: Row[] | null; error: null }) => unknown, reject?: (e: unknown) => unknown) {
+        if (mode === 'delete') {
+          const bleibt = currentRows(table).filter((r) => applyFilters([r], filters).length === 0);
+          fixtures[table] = bleibt;
+          return Promise.resolve({ data: null, error: null }).then(resolve, reject);
+        }
+        const filtered = applyFilters(currentRows(table), filters);
+        return Promise.resolve({ data: filtered, error: null }).then(resolve, reject);
       },
     };
     return builder;

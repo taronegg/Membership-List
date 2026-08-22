@@ -16,6 +16,13 @@ export function formatDatumLang(iso: string | null): string {
   return `${d}. ${MONATE_KURZ[m - 1]} ${y}`;
 }
 
+/** Letzter (oder heutiger) Sonntag als ISO-Datum -- Vorbelegung für den Check-in (7.5). */
+export function letzterSonntag(heute: Date = new Date()): string {
+  const d = new Date(heute);
+  d.setDate(d.getDate() - d.getDay());
+  return d.toISOString().slice(0, 10);
+}
+
 /** Alter in Jahren aus dem Geburtsdatum (7.3: "Geburtsdatum (+ Alter in Klammern)"). */
 export function alterInJahren(geburtsdatum: string | null, heute: Date = new Date()): number | null {
   if (!geburtsdatum) return null;

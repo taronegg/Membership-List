@@ -1,11 +1,13 @@
 import { Pencil } from 'lucide-react';
 import { usePerson } from '../hooks/usePerson';
+import { usePersonAttendance } from '../hooks/usePersonAttendance';
 import { useNavigation, type PersonSubTab } from '../nav/NavigationContext';
 import { Header } from '../components/Header';
 import { InitialsBox } from '../components/InitialsBox';
 import { StatusChip, NeutralChip } from '../components/StatusChip';
 import { FieldGroup, FieldRow } from '../components/FieldGroup';
-import { formatDatumLang, alterInJahren } from '../lib/format';
+import { SonntagsStreifen } from '../components/SonntagsStreifen';
+import { formatDatumLang, formatDatumKurz, alterInJahren } from '../lib/format';
 import { formatPhoneCH } from '@shared/telefon';
 
 // Abschnitt 7.3: Personen-Detail.
@@ -97,9 +99,7 @@ export function PersonenDetailScreen({ personId, subTab }: { personId: string; s
 
         <div style={{ padding: '18px 16px 32px' }}>
           {subTab === 'profil' && <ProfilSubTab person={person} kontaktStats={kontaktStats} />}
-          {subTab === 'anwesenheit' && (
-            <PlatzhalterHinweis text="Anwesenheit folgt in Abschnitt 13, Schritt 6 (Check-in inkl. Offline-Puffer)." />
-          )}
+          {subTab === 'anwesenheit' && <AnwesenheitSubTab personId={personId} />}
           {subTab === 'kontakte' && (
             <PlatzhalterHinweis text="Kontakte folgen in Abschnitt 13, Schritt 7 (Kontakte + Wiedervorlage)." />
           )}
@@ -111,6 +111,68 @@ export function PersonenDetailScreen({ personId, subTab }: { personId: string; s
 
 function PlatzhalterHinweis({ text }: { text: string }) {
   return <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{text}</p>;
+}
+
+/** 7.3: Status-Chip mit dem Anwesenheits-Zustand als Text ("anwesend" / "abwesend" / "nicht erfasst"). */
+function AnwesenheitChip({ status }: { status: 'anwesend' | 'abwesend' | null }) {
+  const bg = status === 'anwesend' ? 'var(--text)' : status === 'abwesend' ? 'var(--accent)' : 'var(--chip-neutral-bg)';
+  const fg = status ? 'var(--bg)' : 'var(--chip-neutral-text)';
+  return (
+    <span className="chip" style={{ display: 'inline-block', background: bg, color: fg, fontSize: 10, fontWeight: 700, padding: '3px 8px' }}>
+      {status ?? 'nicht erfasst'}
+    </span>
+  );
+}
+
+function AnwesenheitSubTab({ personId }: { personId: string }) {
+  const { eintraege, stats, loading } = usePersonAttendance(personId);
+
+  if (loading) return <p style={{ color: 'var(--text-tertiary)' }}>Lädt…</p>;
+  if (!stats) return null;
+
+  const zellen: [string, string][] = [
+    ['Quote', stats.quote !== null ? `${Math.round(stats.quote * 100)}%` : '—'],
+    ['Anwesend', String(stats.anwesend)],
+    ['Abwesend', String(stats.abwesend)],
+    ['Erfasst', String(stats.erfasst)],
+    ['Abw. in Folge', String(stats.abwesendInFolge)],
+    ['Letzte Anw.', formatDatumKurz(stats.letzteAnwesenheit)],
+  ];
+
+  const einzeltermine = [...eintraege].reverse(); // neueste zuerst
+
+  return (
+    <>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'var(--divider)', marginBottom: 20 }}>
+        {zellen.map(([label, wert]) => (
+          <div key={label} style={{ background: 'var(--surface)', padding: '10px 12px' }}>
+            <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--accent)', margin: '0 0 4px' }}>
+              {label}
+            </p>
+            <p style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>{wert}</p>
+          </div>
+        ))}
+      </div>
+
+      <FieldGroup title="Letzte 12 Sonntage">
+        <SonntagsStreifen eintraege={eintraege} />
+      </FieldGroup>
+
+      <FieldGroup title="Einzeltermine">
+        {einzeltermine.length === 0 && <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Keine erfassten Sonntage.</p>}
+        {einzeltermine.map((e) => (
+          <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
+            <span style={{ fontSize: 13 }}>{formatDatumKurz(e.datum)}</span>
+            <AnwesenheitChip status={e.status} />
+          </div>
+        ))}
+      </FieldGroup>
+
+      <FieldGroup title="Events">
+        <PlatzhalterHinweis text="Events folgen in Abschnitt 13, Schritt 9." />
+      </FieldGroup>
+    </>
+  );
 }
 
 function ProfilSubTab({
