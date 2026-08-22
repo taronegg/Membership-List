@@ -28,12 +28,13 @@ Alle neun Schritte sind umgesetzt:
 8. ✅ Übersicht (Home)
 9. ✅ Events (inkl. Anlegen, Lücke 12.2)
 
+Zusätzlich (über die neun Schritte hinaus, aber nötig für echten Betrieb):
+
+- ✅ 7.4 Person anlegen/bearbeiten
+- ✅ PWA-Manifest + Icons ("Zum Home-Bildschirm hinzufügen")
+
 ## Was bewusst noch fehlt
 
-- **7.4 Person anlegen/bearbeiten** ist nur ein Platzhalter-Screen
-  (`app/src/screens/PersonFormScreen.tsx`). Das war in keinem der neun
-  Schritte aus Abschnitt 13 explizit gefordert, ist aber nötig, bevor die App
-  produktiv nutzbar ist.
 - **Audit-Log, Lesezugriffe** (Abschnitt 11): Schreibzugriffe auf `contacts`
   werden per DB-Trigger protokolliert, Lesezugriffe auf die Notizen bräuchten
   eine serverseitige Stelle (z.B. eine Edge Function) -- siehe
