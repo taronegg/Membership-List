@@ -57,7 +57,12 @@ export interface Contact {
   erledigtAm: string | null;
 }
 
-/** Personenliste (7.2): reduzierter Satz + berechnete Quote (5.1). */
+/**
+ * Personenliste (7.2): reduzierter Satz + berechnete Kennzahlen (5.1).
+ * `abwesendInFolge` und `geburtsdatum` werden von 7.2 selbst nicht angezeigt,
+ * aber von der Übersicht (7.1: Risiko-Kontakte, Geburtstage) gebraucht --
+ * hier mitgeladen, damit es nur eine Personen-Query gibt.
+ */
 export interface PersonListItem {
   id: string;
   vorname: string;
@@ -68,6 +73,8 @@ export interface PersonListItem {
   zustaendig: LeaderRef | null;
   zuPruefen: boolean;
   quote: number | null;
+  abwesendInFolge: number;
+  geburtsdatum: string | null;
 }
 
 /** Zeile aus `attendance`. */

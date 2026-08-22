@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronRight, AlertTriangle } from 'lucide-react';
 import { usePeopleList } from '../hooks/usePeopleList';
 import { useLookups } from '../hooks/useLookups';
@@ -104,15 +104,24 @@ function passtFilter(person: PersonListItem, filter: FilterState, suche: string)
   return true;
 }
 
-export function PersonenListeScreen({ initialZustaendigId }: { initialZustaendigId?: string | null }) {
+export function PersonenListeScreen() {
   const { people, loading } = usePeopleList();
   const { status, bacenta, leaders } = useLookups();
   const { leader } = useAuth();
-  const { push } = useNavigation();
+  const { push, pendingPersonenLeiterFilter, consumePendingPersonenLeiterFilter } = useNavigation();
   const [suche, setSuche] = useState('');
-  const [filter, setFilter] = useState<FilterState>(
-    initialZustaendigId ? { ...LEER_FILTER, zustaendigId: initialZustaendigId } : LEER_FILTER,
-  );
+  const [filter, setFilter] = useState<FilterState>(LEER_FILTER);
+
+  // 8: "Leiter-Zeile antippen ... setzt den Zuständigkeits-Filter -- alle
+  // anderen Filter werden zurückgesetzt." Wird von der Übersicht (7.1) gesetzt.
+  useEffect(() => {
+    if (pendingPersonenLeiterFilter) {
+      setSuche('');
+      setFilter({ ...LEER_FILTER, zustaendigId: pendingPersonenLeiterFilter });
+      consumePendingPersonenLeiterFilter();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPersonenLeiterFilter]);
 
   const gefiltert = useMemo(() => {
     return people

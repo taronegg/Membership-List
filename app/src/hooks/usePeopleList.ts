@@ -8,6 +8,7 @@ interface RawRow {
   vorname: string;
   nachname: string;
   zu_pruefen: boolean;
+  geburtsdatum: string | null;
   status: { id: string; name: string; sortierung: number } | null;
   bacenta: { id: string; name: string; sortierung: number } | null;
   basonta: { id: string; name: string; sortierung: number } | null;
@@ -34,7 +35,7 @@ export function usePeopleList(): { people: PersonListItem[]; loading: boolean; r
         supabase
           .from('people')
           .select(
-            'id, vorname, nachname, zu_pruefen, ' +
+            'id, vorname, nachname, zu_pruefen, geburtsdatum, ' +
               'status:status_optionen(id, name, sortierung), ' +
               'bacenta:bacenta_optionen(id, name, sortierung), ' +
               'basonta:basonta_optionen(id, name, sortierung), ' +
@@ -53,17 +54,22 @@ export function usePeopleList(): { people: PersonListItem[]; loading: boolean; r
       }
 
       const rows = (peopleResult.data ?? []) as unknown as RawRow[];
-      const items: PersonListItem[] = rows.map((row) => ({
-        id: row.id,
-        vorname: row.vorname,
-        nachname: row.nachname,
-        zuPruefen: row.zu_pruefen,
-        status: row.status,
-        bacenta: row.bacenta,
-        basonta: row.basonta,
-        zustaendig: row.zustaendig_leader,
-        quote: attendanceOf(attendanceByPerson.get(row.id) ?? []).quote,
-      }));
+      const items: PersonListItem[] = rows.map((row) => {
+        const stats = attendanceOf(attendanceByPerson.get(row.id) ?? []);
+        return {
+          id: row.id,
+          vorname: row.vorname,
+          nachname: row.nachname,
+          zuPruefen: row.zu_pruefen,
+          geburtsdatum: row.geburtsdatum,
+          status: row.status,
+          bacenta: row.bacenta,
+          basonta: row.basonta,
+          zustaendig: row.zustaendig_leader,
+          quote: stats.quote,
+          abwesendInFolge: stats.abwesendInFolge,
+        };
+      });
 
       setPeople(items);
       setLoading(false);

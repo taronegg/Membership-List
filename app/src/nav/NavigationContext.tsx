@@ -21,6 +21,11 @@ interface NavState {
   push: (screen: Screen) => void;
   pop: () => void;
   setPersonSubTab: (subTab: PersonSubTab) => void;
+  /** 8: "Leiter-Zeile antippen: wechselt in die Personenliste und setzt den Zuständigkeits-Filter." */
+  geheZuPersonenGefiltertNachLeiter: (leaderId: string) => void;
+  /** Von der Personenliste einmalig konsumiert, danach zurückgesetzt (siehe oben). */
+  pendingPersonenLeiterFilter: string | null;
+  consumePendingPersonenLeiterFilter: () => void;
 }
 
 const NavigationContext = createContext<NavState | null>(null);
@@ -28,6 +33,7 @@ const NavigationContext = createContext<NavState | null>(null);
 export function NavigationProvider({ children }: { children: ReactNode }) {
   const [tab, setTabState] = useState<Tab>('uebersicht');
   const [stack, setStack] = useState<Screen[]>([]);
+  const [pendingPersonenLeiterFilter, setPendingPersonenLeiterFilter] = useState<string | null>(null);
 
   function setTab(next: Tab) {
     setTabState(next);
@@ -50,8 +56,25 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  function geheZuPersonenGefiltertNachLeiter(leaderId: string) {
+    setPendingPersonenLeiterFilter(leaderId);
+    setTab('personen');
+  }
+
   return (
-    <NavigationContext.Provider value={{ tab, stack, setTab, push, pop, setPersonSubTab }}>
+    <NavigationContext.Provider
+      value={{
+        tab,
+        stack,
+        setTab,
+        push,
+        pop,
+        setPersonSubTab,
+        geheZuPersonenGefiltertNachLeiter,
+        pendingPersonenLeiterFilter,
+        consumePendingPersonenLeiterFilter: () => setPendingPersonenLeiterFilter(null),
+      }}
+    >
       {children}
     </NavigationContext.Provider>
   );

@@ -8,7 +8,7 @@ import { ProfilTabScreen } from './screens/ProfilTabScreen';
 import { AnwesenheitTabScreen } from './screens/AnwesenheitTabScreen';
 import { KontakteTabScreen } from './screens/KontakteTabScreen';
 import { KontaktFormScreen } from './screens/KontaktFormScreen';
-import { PlatzhalterTabScreen } from './screens/PlatzhalterTabScreen';
+import { UebersichtScreen } from './screens/UebersichtScreen';
 
 // Abschnitt 6 (Navigation): Tab-Inhalt oder, wenn der Screen-Stack nicht leer
 // ist, der oberste Detail-/Formular-Screen -- der die Tab-Bar ersetzt (8:
@@ -43,7 +43,7 @@ function StackScreen({ screen }: { screen: NonNullable<ReturnType<typeof useNavi
 function TabScreen({ tab }: { tab: ReturnType<typeof useNavigation>['tab'] }) {
   switch (tab) {
     case 'uebersicht':
-      return <PlatzhalterTabScreen titel="Übersicht" hinweis="Folgt in Abschnitt 13, Schritt 8 (aggregiert alles Vorherige)." />;
+      return <UebersichtScreen />;
     case 'personen':
       return <PersonenListeScreen />;
     case 'anwesenheit':
